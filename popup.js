@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Update UI with video info
   videoInfo.textContent = `Video ID: ${videoId}`;
   
+  // Store current video ID globally
+  window.currentVideoId = videoId;
+  
   // Check for existing report
   if (supabaseReady && supabaseClient.isReady()) {
     console.log('🔍 Checking for existing report for video:', videoId);
@@ -72,17 +75,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('🔍 Analysis started, supabaseReady:', supabaseReady);
 
       // Send message to content script to get video info
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'getVideoInfo',
-        videoId: videoId,
-        videoUrl: tab.url
-      });
-
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to get video info');
+      console.log('🔍 Sending message to content script on tab:', tab.id);
+      console.log('🔍 Message payload:', { action: 'getVideoInfo', videoId, videoUrl: tab.url });
+      
+      let response;
+      let videoData;
+      
+      try {
+        response = await chrome.tabs.sendMessage(tab.id, {
+          action: 'getVideoInfo',
+          videoId: videoId,
+          videoUrl: tab.url
+        });
+        console.log('✅ Received response from content script:', response);
+        
+        if (response && response.success) {
+          videoData = response.data;
+        } else {
+          throw new Error('Content script returned invalid response');
+        }
+      } catch (messageError) {
+        console.error('❌ Content script failed, using fallback data:', messageError);
+        // Fallback: create basic video data from what we have
+        videoData = {
+          videoId: videoId,
+          videoUrl: tab.url,
+          title: `YouTube Video ${videoId}`,
+          thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+        };
+        console.log('🔄 Using fallback video data:', videoData);
       }
-
-      const videoData = response.data;
       console.log('Video data:', videoData);
 
       // Try to create analysis report in Supabase
@@ -100,9 +122,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Global variables for polling and progress tracking
+  let pollingInterval = null;
+  let progressStage = 0;
+  let analysisStartTime = null;
+
+  // Progress stages for better user feedback
+  const PROGRESS_STAGES = [
+    'Initializing analysis...',
+    'Processing video content...',
+    'Extracting claims...',
+    'Fact-checking claims...',
+    'Generating verification report...',
+    'Finalizing results...'
+  ];
+
   // Handle analysis with Supabase
   async function handleSupabaseAnalysis(videoData) {
     console.log('🔍 handleSupabaseAnalysis called with:', videoData);
+    analysisStartTime = Date.now();
+    progressStage = 0;
+    
     try {
       status.textContent = 'Getting webhook configuration...';
       console.log('🔍 Getting webhook URL from database...');
@@ -115,61 +155,84 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       console.log('Webhook URL found:', webhookUrl);
-      status.textContent = 'Creating analysis report...';
       
-      // Create analysis report in Supabase
+      // Create analysis report
+      updateProgressStage('Creating analysis report...');
+      console.log('🔍 Creating analysis report...');
       const report = await supabaseClient.createAnalysisReport(videoData);
-      console.log('Analysis report created:', report);
+      console.log('🔍 Analysis report created:', report);
       
-      status.textContent = 'Triggering analysis workflow...';
-      
-      // Set up real-time subscription for updates
-      supabaseClient.subscribeToAnalysisUpdates(report.id, (eventType, data) => {
-        console.log('Real-time update:', eventType, data);
-        
-        if (eventType === 'report_updated') {
-          if (data.analysis_status === 'Complete') {
-            status.textContent = 'Analysis complete!';
-            loading.style.display = 'none';
-            analyzeBtn.disabled = false;
-            
-            // Load and display results
-            loadAnalysisResults(report.id);
-          } else if (data.analysis_status === 'Failed') {
-            status.textContent = 'Analysis failed';
-            loading.style.display = 'none';
-            analyzeBtn.disabled = false;
-          }
-        } else if (eventType === 'claim_added') {
-          status.textContent = `Processing claims... (${data.original_statement?.substring(0, 50)}...)`;
-        }
-      });
-      
-      // Trigger the webhook with video URL
-      try {
-        const webhookResult = await supabaseClient.triggerWebhook(webhookUrl, videoData.videoUrl);
-        console.log('Webhook triggered successfully:', webhookResult);
-        status.textContent = 'Analysis workflow started. Waiting for results...';
-      } catch (webhookError) {
-        console.error('Webhook trigger failed:', webhookError);
-        status.textContent = `Webhook error: ${webhookError.message}`;
-        loading.style.display = 'none';
-        analyzeBtn.disabled = false;
-        return;
+      if (!report || !report.id) {
+        throw new Error('Failed to create analysis report');
       }
       
-      // Set a timeout in case the workflow doesn't complete
-      setTimeout(() => {
-        if (loading.style.display !== 'none') {
-          status.textContent = 'Analysis is taking longer than expected...';
+      // Store current report ID for polling
+      window.currentReportId = report.id;
+      
+      // Subscribe to real-time updates
+      console.log('🔍 Setting up real-time subscription...');
+      updateProgressStage('Setting up real-time updates...');
+      
+      try {
+        supabaseClient.subscribeToAnalysisUpdates(report.id, handleReportUpdate);
+        
+        // Trigger the webhook with video URL
+        try {
+          const webhookResult = await supabaseClient.triggerWebhook(webhookUrl, videoData.videoUrl);
+          console.log('Webhook triggered successfully:', webhookResult);
+          updateProgressStage('Analysis workflow started...');
+          
+          // Start polling as fallback
+          startPollingFallback(report.id);
+          
+          // Show manual refresh button after 15 seconds
+          setTimeout(() => {
+            if (loading.style.display !== 'none') {
+              showManualRefreshButton();
+            }
+          }, 15000);
+          
+          // Set progressive timeouts with better messaging
+          setTimeout(() => {
+            if (loading.style.display !== 'none') {
+              updateProgressStage('Analysis is taking longer than expected...');
+            }
+          }, 30000); // 30 seconds
+          
+          setTimeout(() => {
+            if (loading.style.display !== 'none') {
+              updateProgressStage('Still processing... This may take a few minutes.');
+            }
+          }, 60000); // 1 minute
+          
+          setTimeout(() => {
+            if (loading.style.display !== 'none') {
+              handleAnalysisTimeout();
+            }
+          }, 180000); // 3 minutes
+          
+        } catch (webhookError) {
+          console.error('Webhook trigger failed:', webhookError);
+          status.textContent = `Webhook error: ${webhookError.message}`;
+          loading.style.display = 'none';
+          analyzeBtn.disabled = false;
+          return;
         }
-      }, 30000); // 30 seconds
+        
+      } catch (subscriptionError) {
+        console.error('Real-time subscription failed:', subscriptionError);
+        updateProgressStage('Real-time updates unavailable, using polling...');
+        
+        // If real-time fails, rely on polling
+        startPollingFallback(report.id);
+      }
       
     } catch (error) {
       console.error('Supabase analysis error:', error);
       status.textContent = `Error: ${error.message}`;
       loading.style.display = 'none';
       analyzeBtn.disabled = false;
+      hideManualRefreshButton();
     }
   }
 
@@ -226,22 +289,185 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (eventType === 'report_updated') {
       if (data.analysis_status === 'Complete') {
+        console.log('✅ Analysis completed via real-time update');
+        clearPollingInterval();
         displayReport(data);
         loading.style.display = 'none';
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = 'Re-analyze Claims';
         status.textContent = 'Analysis complete!';
+        hideManualRefreshButton();
       } else if (data.analysis_status === 'Failed') {
+        console.log('❌ Analysis failed via real-time update');
+        clearPollingInterval();
         status.textContent = 'Analysis failed';
         loading.style.display = 'none';
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = 'Retry Analysis';
+        hideManualRefreshButton();
       }
     } else if (eventType === 'claim_added') {
-      status.textContent = `Processing claims... (${data.original_statement?.substring(0, 30)}...)`;
+      updateProgressStage(`Processing claims... (${data.original_statement?.substring(0, 30)}...)`);
     }
   }
-  
+
+  // Polling fallback mechanism
+  function startPollingFallback(reportId) {
+    console.log('🔄 Starting polling fallback for report:', reportId);
+    
+    // Clear any existing polling
+    clearPollingInterval();
+    
+    // Poll every 10 seconds
+    pollingInterval = setInterval(async () => {
+      try {
+        console.log('🔄 Polling for report updates...');
+        const report = await supabaseClient.getExistingReport(window.currentVideoId || reportId);
+        
+        if (report && report.id === reportId) {
+          if (report.analysis_status === 'Complete') {
+            console.log('✅ Analysis completed via polling');
+            clearPollingInterval();
+            displayReport(report);
+            loading.style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = 'Re-analyze Claims';
+            status.textContent = 'Analysis complete!';
+            hideManualRefreshButton();
+          } else if (report.analysis_status === 'Failed') {
+            console.log('❌ Analysis failed via polling');
+            clearPollingInterval();
+            status.textContent = 'Analysis failed';
+            loading.style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = 'Retry Analysis';
+            hideManualRefreshButton();
+          } else {
+            // Still processing, update progress
+            updateProgressStage();
+          }
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+        // Continue polling despite errors
+      }
+    }, 10000); // Poll every 10 seconds
+  }
+
+  // Clear polling interval
+  function clearPollingInterval() {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+      console.log('🔄 Polling cleared');
+    }
+  }
+
+  // Update progress stage with rotating messages
+  function updateProgressStage(customMessage = null) {
+    if (customMessage) {
+      status.textContent = customMessage;
+      return;
+    }
+    
+    // Rotate through progress stages
+    if (progressStage < PROGRESS_STAGES.length - 1) {
+      progressStage++;
+    } else {
+      progressStage = 2; // Loop back to "Extracting claims..."
+    }
+    
+    const elapsed = Math.floor((Date.now() - analysisStartTime) / 1000);
+    status.textContent = `${PROGRESS_STAGES[progressStage]} (${elapsed}s)`;
+  }
+
+  // Handle analysis timeout
+  function handleAnalysisTimeout() {
+    console.log('⏰ Analysis timeout reached');
+    clearPollingInterval();
+    
+    status.textContent = 'Analysis timed out. You can check status manually or retry.';
+    loading.style.display = 'none';
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Retry Analysis';
+    
+    // Show manual refresh button
+    showManualRefreshButton();
+  }
+
+  // Show manual refresh button
+  function showManualRefreshButton() {
+    let refreshBtn = document.getElementById('manualRefreshBtn');
+    if (!refreshBtn) {
+      refreshBtn = document.createElement('button');
+      refreshBtn.id = 'manualRefreshBtn';
+      refreshBtn.className = 'manual-refresh-btn';
+      refreshBtn.textContent = 'Check Status';
+      refreshBtn.onclick = checkAnalysisStatus;
+      
+      // Insert after analyze button
+      analyzeBtn.parentNode.insertBefore(refreshBtn, analyzeBtn.nextSibling);
+    }
+    refreshBtn.style.display = 'block';
+  }
+
+  // Hide manual refresh button
+  function hideManualRefreshButton() {
+    const refreshBtn = document.getElementById('manualRefreshBtn');
+    if (refreshBtn) {
+      refreshBtn.style.display = 'none';
+    }
+  }
+
+  // Manual status check function
+  async function checkAnalysisStatus() {
+    if (!window.currentReportId) {
+      status.textContent = 'No active analysis to check';
+      return;
+    }
+    
+    try {
+      status.textContent = 'Checking analysis status...';
+      const refreshBtn = document.getElementById('manualRefreshBtn');
+      if (refreshBtn) refreshBtn.disabled = true;
+      
+      const report = await supabaseClient.getExistingReport(window.currentVideoId || window.currentReportId);
+      
+      if (report && report.id === window.currentReportId) {
+        if (report.analysis_status === 'Complete') {
+          console.log('✅ Analysis completed via manual check');
+          displayReport(report);
+          loading.style.display = 'none';
+          analyzeBtn.disabled = false;
+          analyzeBtn.textContent = 'Re-analyze Claims';
+          status.textContent = 'Analysis complete!';
+          hideManualRefreshButton();
+        } else if (report.analysis_status === 'Failed') {
+          console.log('❌ Analysis failed via manual check');
+          status.textContent = 'Analysis failed';
+          loading.style.display = 'none';
+          analyzeBtn.disabled = false;
+          analyzeBtn.textContent = 'Retry Analysis';
+          hideManualRefreshButton();
+        } else {
+          status.textContent = `Analysis still in progress (${report.analysis_status})`;
+          // Restart polling if it was stopped
+          if (!pollingInterval) {
+            startPollingFallback(report.id);
+          }
+        }
+      } else {
+        status.textContent = 'Could not find analysis report';
+      }
+    } catch (error) {
+      console.error('Manual status check error:', error);
+      status.textContent = 'Error checking status';
+    } finally {
+      const refreshBtn = document.getElementById('manualRefreshBtn');
+      if (refreshBtn) refreshBtn.disabled = false;
+    }
+  }
+
   // Display verification report
   async function displayReport(report) {
     try {
@@ -443,3 +669,11 @@ function toggleSources(claimIndex) {
 
 // Make toggleClaim available globally
 window.toggleClaim = toggleClaim;
+
+// Cleanup when popup closes
+window.addEventListener('beforeunload', () => {
+  clearPollingInterval();
+  if (window.currentReportId && supabaseClient) {
+    supabaseClient.unsubscribeFromAnalysisUpdates(window.currentReportId);
+  }
+});

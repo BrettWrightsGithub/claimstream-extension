@@ -294,6 +294,36 @@
     .source-url a:hover {
       text-decoration: underline;
     }
+    
+    /* Manual refresh button styles */
+    .manual-refresh-btn {
+      background: #F1F5F9;
+      color: #4A5568;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+      transition: all 0.2s ease;
+      display: none;
+    }
+    
+    .manual-refresh-btn:hover {
+      background: #E2E8F0;
+      border-color: #CBD5E0;
+    }
+    
+    .manual-refresh-btn:active {
+      transform: translateY(1px);
+    }
+    
+    .manual-refresh-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>

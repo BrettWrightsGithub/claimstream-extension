@@ -1,9 +1,14 @@
 // Content script for ClaimStream extension
-console.log('ClaimStream content script loaded on:', window.location.href);
-console.log('Document ready state:', document.readyState);
+console.log('🚀 ClaimStream content script loaded on:', window.location.href);
+console.log('📄 Document ready state:', document.readyState);
+console.log('⏰ Content script timestamp:', new Date().toISOString());
+console.log('🔧 Chrome runtime available:', !!chrome.runtime);
+console.log('🔧 Chrome tabs available:', !!chrome.tabs);
 
 // Listen for messages from popup
+console.log('📡 Setting up message listener...');
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('📨 Content script received message:', request);
   if (request.action === 'getVideoInfo') {
     console.log('Received getVideoInfo request:', request);
     

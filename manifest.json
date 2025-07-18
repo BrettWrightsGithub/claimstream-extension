@@ -23,7 +23,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["config.js", "supabase-client.js", "content.js"],
+      "js": ["content.js"],
       "run_at": "document_end"
     }
   ],
