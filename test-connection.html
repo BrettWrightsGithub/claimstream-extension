@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaimStream Supabase Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196F3;
+        }
+        .loading {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #FFC107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 ClaimStream Supabase Connection Test</h1>
+        <p>This tool will test your Supabase configuration and database connection.</p>
+        
+        <div>
+            <button onclick="testConfig()">1. Test Config</button>
+            <button onclick="testConnection()">2. Test Connection</button>
+            <button onclick="testTables()">3. Test Tables</button>
+            <button onclick="testWebhook()">4. Test Webhook URL</button>
+            <button onclick="runAllTests()">🚀 Run All Tests</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <!-- Load Supabase and config -->
+    <script src="supabase.js"></script>
+    <script src="config.js"></script>
+    <script src="supabase-client.js"></script>
+
+    <script>
+        let supabase = null;
+        
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testConfig() {
+            clearResults();
+            addResult('🔧 Testing configuration...', 'loading');
+            
+            try {
+                if (typeof CONFIG === 'undefined') {
+                    throw new Error('CONFIG not found - make sure config.js exists');
+                }
+                
+                if (!CONFIG.supabase) {
+                    throw new Error('CONFIG.supabase not found');
+                }
+                
+                if (!CONFIG.supabase.url) {
+                    throw new Error('Supabase URL not configured');
+                }
+                
+                if (!CONFIG.supabase.anonKey) {
+                    throw new Error('Supabase anon key not configured');
+                }
+                
+                addResult(`✅ Config loaded successfully
+URL: ${CONFIG.supabase.url}
+Key: ${CONFIG.supabase.anonKey.substring(0, 20)}...`, 'success');
+                
+            } catch (error) {
+                addResult(`❌ Config test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testConnection() {
+            addResult('🔗 Testing Supabase connection...', 'loading');
+            
+            try {
+                if (typeof CONFIG === 'undefined') {
+                    throw new Error('Run config test first');
+                }
+                
+                // Initialize Supabase client
+                supabase = window.supabase.createClient(
+                    CONFIG.supabase.url,
+                    CONFIG.supabase.anonKey
+                );
+                
+                // Test connection with a simple query
+                const { data, error } = await supabase
+                    .from('analysis_reports')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                addResult('✅ Supabase connection successful!', 'success');
+                
+            } catch (error) {
+                addResult(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTables() {
+            addResult('📋 Testing database tables...', 'loading');
+            
+            try {
+                if (!supabase) {
+                    throw new Error('Run connection test first');
+                }
+                
+                // Test each table
+                const tables = ['analysis_reports', 'verified_claims', 'configs'];
+                
+                for (const table of tables) {
+                    const { data, error } = await supabase
+                        .from(table)
+                        .select('*', { count: 'exact', head: true });
+                    
+                    if (error) {
+                        throw new Error(`Table ${table}: ${error.message}`);
+                    }
+                    
+                    addResult(`✅ Table '${table}' accessible`, 'success');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Table test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWebhook() {
+            addResult('🔗 Testing webhook URL configuration...', 'loading');
+            
+            try {
+                if (!supabase) {
+                    throw new Error('Run connection test first');
+                }
+                
+                // Try to get webhook URL
+                const { data, error } = await supabase
+                    .from('configs')
+                    .select('n8nWebhookUrl')
+                    .limit(1);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                if (!data || data.length === 0) {
+                    throw new Error('No webhook URL configured in configs table');
+                }
+                
+                const webhookUrl = data[0].n8nWebhookUrl;
+                if (!webhookUrl) {
+                    throw new Error('Webhook URL is null or empty');
+                }
+                
+                addResult(`✅ Webhook URL found: ${webhookUrl}`, 'success');
+                
+            } catch (error) {
+                addResult(`❌ Webhook test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            addResult('🚀 Running all tests...', 'info');
+            
+            await testConfig();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testConnection();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testTables();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testWebhook();
+            
+            addResult('🎉 All tests completed!', 'info');
+        }
+    </script>
+</body>
+</html>

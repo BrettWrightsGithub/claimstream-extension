@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 440px;
+      height: 600px;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      overflow-x: hidden;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    
+    .logo {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    
+    .subtitle {
+      font-size: 10px;
+      opacity: 0.8;
+    }
+    
+    .content {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 15px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .status {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    
+    .analyze-btn {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .analyze-btn:hover {
+      background: #45a049;
+    }
+    
+    .analyze-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    
+    .video-info {
+      margin-top: 15px;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 10px 0;
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 2px solid white;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Report Display Styles */
+    .report-container {
+      display: none;
+      margin-top: 15px;
+      background: #F8FAFC;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #E2E8F0;
+      color: #1A202C;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .report-header {
+      margin-bottom: 15px;
+    }
+    
+    .report-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    
+    .report-summary {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    
+    .summary-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .pill {
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .pill.total { background: #666; }
+    .pill.true { background: #22c55e; }
+    .pill.partially-true { background: #f59e0b; }
+    .pill.false { background: #ef4444; }
+    
+
+    
+    .claim-item {
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #FFFFFF;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .claim-header {
+      padding: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: #1A202C;
+    }
+    
+    .claim-header:hover {
+      background: #F1F5F9;
+    }
+    
+
+    
+    .claim-pill {
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      color: white;
+      flex-shrink: 0;
+      margin-right: 15px;
+      min-width: 80px;
+      text-align: center;
+      height: fit-content;
+    }
+    
+    .claim-text {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.5;
+      padding-top: 2px;
+    }
+    
+    .claim-details {
+      display: none;
+      padding: 0 12px 12px;
+      border-top: 1px solid #E2E8F0;
+      margin-top: 12px;
+      color: #4A5568;
+    }
+    
+    .claim-details.expanded {
+      display: block;
+    }
+    
+    .claim-speaker {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-bottom: 6px;
+    }
+    
+    .claim-verification {
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    
+    .sources-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #E2E8F0;
+    }
+    
+    .sources-header {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+      font-weight: 600;
+      color: #2D3748;
+      font-size: 14px;
+    }
+    
+    .sources-header:hover {
+      color: #3182CE;
+    }
+    
+    .sources-toggle {
+      margin-left: 8px;
+      font-size: 12px;
+      transition: transform 0.2s ease;
+    }
+    
+    .sources-toggle.expanded {
+      transform: rotate(90deg);
+    }
+    
+    .sources-list {
+      display: none;
+      margin-top: 10px;
+    }
+    
+    .source-item {
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    
+    .source-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    
+    .source-name {
+      font-weight: 600;
+      color: #2D3748;
+      font-size: 13px;
+    }
+    
+    .source-credibility {
+      background: #E3F2FD;
+      color: #1976D2;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    
+    .source-statement {
+      color: #4A5568;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    
+    .source-url {
+      font-size: 12px;
+    }
+    
+    .source-url a {
+      color: #3182CE;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    
+    .source-url a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">ClaimStream</div>
+    <div class="subtitle">YouTube Claim Verification</div>
+  </div>
+  
+  <div class="content">
+    <div class="status" id="status">Ready to analyze claims</div>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div>Analyzing video...</div>
+    </div>
+    
+    <button class="analyze-btn" id="analyzeBtn">Analyze Claims</button>
+    
+    <div class="video-info" id="videoInfo">
+      Navigate to a YouTube video to begin analysis
+    </div>
+    
+    <!-- Report Display Container -->
+    <div class="report-container" id="reportContainer">
+      <div class="report-header">
+        <div class="report-title">Verification Report</div>
+        <div class="report-summary" id="reportSummary">Analysis complete</div>
+      </div>
+      
+      <div class="summary-pills" id="summaryPills">
+        <!-- Pills will be populated by JavaScript -->
+      </div>
+      
+      <div class="claims-list" id="claimsList">
+        <!-- Claims will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- Supabase JavaScript client (local) -->
+  <script src="supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
