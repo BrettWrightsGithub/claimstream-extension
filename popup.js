@@ -517,30 +517,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   function displayClaimsList(claims) {
     const claimsContainer = document.getElementById('claimsList');
     
-    if (claims.length === 0) {
-      claimsContainer.innerHTML = '<div style="text-align: center; opacity: 0.7; padding: 20px;">No claims found in this video</div>';
-      return;
-    }
-    
     claimsContainer.innerHTML = claims.map((claim, index) => {
       const statusColor = getStatusColor(claim.verification_status);
-      const sourcesHtml = generateSourcesHtml(claim.supporting_evidence || [], index);
+      const sources = claim.supporting_evidence || [];
+      const sourcesHtml = generateSourcesHtml(sources, index);
+      const fallaciesHtml = generateFallaciesHtml(claim.secondary_data, index);
       
       return `
         <div class="claim-item">
           <div class="claim-header" data-claim-index="${index}">
             <div class="claim-pill" style="background-color: ${statusColor}">
-              ${claim.verification_status}
+              ${claim.verification_status || 'Unverified'}
             </div>
-            <div class="claim-text">
-              ${claim.original_statement}
-            </div>
+            <div class="claim-text">${claim.original_statement || 'No statement available'}</div>
             <div class="claim-arrow">▶</div>
           </div>
-          <div class="claim-details" id="claim-details-${index}">
-            <div class="claim-speaker">Speaker: ${claim.participant}</div>
-            <div class="claim-verification">${claim.verification_summary}</div>
+          <div class="claim-details" id="claim-details-${index}" style="display: none;">
+            <div class="claim-participant">
+              <strong>Participant:</strong> ${claim.participant || 'Unknown'}
+            </div>
+            <div class="claim-summary">
+              <strong>Verification Summary:</strong> ${claim.verification_summary || 'No summary available'}
+            </div>
             ${sourcesHtml}
+            ${fallaciesHtml}
           </div>
         </div>
       `;
@@ -560,6 +560,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.stopPropagation(); // Prevent claim toggle
         const claimIndex = header.getAttribute('data-claim-index');
         toggleSources(claimIndex);
+      });
+    });
+    
+    // Add event listeners to fallacies headers
+    claimsContainer.querySelectorAll('.fallacies-header').forEach(header => {
+      header.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent claim toggle
+        const claimIndex = header.getAttribute('data-claim-index');
+        toggleFallacies(claimIndex);
       });
     });
   }
@@ -664,6 +673,121 @@ function toggleSources(claimIndex) {
   } else {
     sourcesList.style.display = 'none';
     toggle.classList.remove('expanded');
+  }
+}
+
+// Function to generate logical fallacies HTML
+function generateFallaciesHtml(secondaryData, claimIndex) {
+  if (!secondaryData || !secondaryData.logical_fallacies || secondaryData.logical_fallacies.length === 0) {
+    return '';
+  }
+  
+  const fallacies = secondaryData.logical_fallacies;
+  const fallacySummary = secondaryData.fallacy_summary;
+  
+  // Generate summary info
+  let summaryHtml = '';
+  if (fallacySummary && fallacySummary.length > 0) {
+    const wholeClipSummary = fallacySummary.find(s => s.level === 'whole_clip');
+    if (wholeClipSummary) {
+      summaryHtml = `
+        <div class="fallacy-summary">
+          <div class="fallacy-stats">
+            <span class="fallacy-count">Total: ${wholeClipSummary.total_count}</span>
+            ${wholeClipSummary.top_fallacies ? 
+              `<span class="top-fallacies">Most common: ${wholeClipSummary.top_fallacies.slice(0, 2).join(', ')}</span>` : 
+              ''
+            }
+          </div>
+        </div>
+      `;
+    }
+  }
+  
+  // Generate individual fallacy items
+  const fallaciesListHtml = fallacies.map(fallacy => {
+    const severityScore = fallacy.severity_score || 0;
+    const severityColor = getSeverityColor(severityScore);
+    const confidence = fallacy.confidence || 0;
+    const confidencePercent = Math.round(confidence * 100);
+    
+    // Better fallback for name
+    const fallacyName = fallacy.name || (fallacy.type ? fallacy.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Fallacy');
+    
+    // Better fallback for description
+    let description = fallacy.explanatory_snippet || fallacy.description;
+    if (!description && fallacy.type) {
+      // Provide basic descriptions for common fallacy types
+      const fallacyDescriptions = {
+        'ad_hominem': 'Attacks the person making the argument rather than the argument itself',
+        'straw_man': 'Misrepresents an opponent\'s argument to make it easier to attack',
+        'false_dilemma': 'Presents only two options when more possibilities exist',
+        'slippery_slope': 'Assumes one event will lead to a chain of negative consequences',
+        'appeal_to_authority': 'Uses authority as evidence when the authority is not relevant',
+        'cherry_picking': 'Selects only evidence that supports a predetermined conclusion',
+        'conspiracy_theory': 'Assumes coordinated deception without sufficient evidence',
+        'hasty_generalization': 'Makes broad conclusions from limited examples'
+      };
+      description = fallacyDescriptions[fallacy.type] || 'Logical reasoning error detected';
+    }
+    
+    return `
+      <div class="fallacy-item">
+        <div class="fallacy-header">
+          <div class="fallacy-name">${fallacyName}</div>
+          <div class="fallacy-meta">
+            <span class="fallacy-severity" style="background-color: ${severityColor}">
+              ${severityScore > 0 ? severityScore : '?'}
+            </span>
+            <span class="fallacy-confidence">${confidencePercent}%</span>
+            ${fallacy.timestamp ? `<span class="fallacy-timestamp">${fallacy.timestamp}</span>` : ''}
+          </div>
+        </div>
+        <div class="fallacy-description">
+          ${description}
+        </div>
+        ${fallacy.evidence ? `<div class="fallacy-evidence"><strong>Evidence:</strong> ${fallacy.evidence}</div>` : ''}
+        ${fallacy.category ? `<div class="fallacy-category"><strong>Category:</strong> ${fallacy.category}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  return `
+    <div class="fallacies-section">
+      <div class="fallacies-header" data-claim-index="${claimIndex}">
+        <span>Logical Fallacies (${fallacies.length})</span>
+        <span class="fallacies-toggle">▶</span>
+      </div>
+      ${summaryHtml}
+      <div class="fallacies-list" id="fallacies-${claimIndex}">
+        ${fallaciesListHtml}
+      </div>
+    </div>
+  `;
+}
+
+// Function to toggle fallacies display
+function toggleFallacies(claimIndex) {
+  const fallaciesList = document.getElementById(`fallacies-${claimIndex}`);
+  const toggle = document.querySelector(`[data-claim-index="${claimIndex}"] .fallacies-toggle`);
+  
+  if (fallaciesList.style.display === 'none' || fallaciesList.style.display === '') {
+    fallaciesList.style.display = 'block';
+    toggle.classList.add('expanded');
+  } else {
+    fallaciesList.style.display = 'none';
+    toggle.classList.remove('expanded');
+  }
+}
+
+// Function to get severity color based on numeric score (0-100)
+function getSeverityColor(severityScore) {
+  if (severityScore >= 67) {
+    return '#ef4444'; // Red - High severity
+  } else if (severityScore >= 34) {
+    return '#f59e0b'; // Orange - Medium severity
+  } else {
+    return '#22c55e'; // Green - Low severity
   }
 }
 
