@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClaimStream Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .icon-container { margin: 20px 0; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>ClaimStream Icon Generator</h1>
+    <p>Right-click each canvas and "Save image as..." to create the icon files.</p>
+    
+    <div class="icon-container">
+        <h3>16x16 Icon</h3>
+        <canvas id="icon16" width="16" height="16"></canvas>
+    </div>
+    
+    <div class="icon-container">
+        <h3>48x48 Icon</h3>
+        <canvas id="icon48" width="48" height="48"></canvas>
+    </div>
+    
+    <div class="icon-container">
+        <h3>128x128 Icon</h3>
+        <canvas id="icon128" width="128" height="128"></canvas>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add magnifying glass icon
+            ctx.strokeStyle = 'white';
+            ctx.fillStyle = 'white';
+            ctx.lineWidth = Math.max(1, size / 16);
+            
+            const centerX = size / 2;
+            const centerY = size / 2 - size / 8;
+            const radius = size / 4;
+            
+            // Circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Handle
+            const handleStartX = centerX + radius * 0.7;
+            const handleStartY = centerY + radius * 0.7;
+            const handleEndX = centerX + radius * 1.3;
+            const handleEndY = centerY + radius * 1.3;
+            
+            ctx.beginPath();
+            ctx.moveTo(handleStartX, handleStartY);
+            ctx.lineTo(handleEndX, handleEndY);
+            ctx.stroke();
+            
+            // Add checkmark inside circle
+            ctx.lineWidth = Math.max(1, size / 20);
+            ctx.beginPath();
+            ctx.moveTo(centerX - radius/2, centerY);
+            ctx.lineTo(centerX - radius/4, centerY + radius/3);
+            ctx.lineTo(centerX + radius/2, centerY - radius/3);
+            ctx.stroke();
+        }
+        
+        // Generate all icon sizes
+        drawIcon(document.getElementById('icon16'), 16);
+        drawIcon(document.getElementById('icon48'), 48);
+        drawIcon(document.getElementById('icon128'), 128);
+    </script>
+</body>
+</html>
