@@ -9,8 +9,8 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: transparent; /* neutral transparent background */
+      color: #111827; /* neutral dark text */
       overflow-x: hidden;
     }
     
@@ -31,10 +31,13 @@
     }
     
     .content {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 15px;
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.60); /* frosted glass */
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 12px;
+      padding: 16px;
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.10);
     }
     
     .status {
@@ -95,12 +98,14 @@
     .report-container {
       display: none;
       margin-top: 15px;
-      background: #F8FAFC;
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 14px;
       padding: 22px;
-      border: 1px solid #E2E8F0;
+      border: 1px solid rgba(255, 255, 255, 0.50);
       color: #1A202C;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
     
     .report-header {
