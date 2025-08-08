@@ -96,11 +96,13 @@
     .report-container {
       display: none;
       margin-top: 15px;
-      background: #F8FAFC;
+      background: rgba(248, 250, 252, 0.92); /* subtle frosted look */
       border-radius: 12px;
       padding: 22px;
       border: 1px solid #E2E8F0;
       color: #1A202C;
+      backdrop-filter: blur(6px) saturate(120%);
+      -webkit-backdrop-filter: blur(6px) saturate(120%);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
