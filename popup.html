@@ -97,7 +97,7 @@
       margin-top: 15px;
       background: #F8FAFC;
       border-radius: 12px;
-      padding: 20px;
+      padding: 22px;
       border: 1px solid #E2E8F0;
       color: #1A202C;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -128,9 +128,9 @@
     }
     
     .pill {
-      padding: 6px 10px;
+      padding: 7px 12px;
       border-radius: 12px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
       color: white;
     }
@@ -145,13 +145,14 @@
     .claim-item {
       border: 1px solid #E2E8F0;
       border-radius: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       background: #FFFFFF;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      overflow: hidden; /* ensure rounded corners clip the colored left border */
     }
     
     .claim-header {
-      padding: 12px;
+      padding: 12px 12px 12px 18px; /* extra left padding to offset colored border */
       cursor: pointer;
       display: flex;
       align-items: flex-start;
@@ -164,37 +165,28 @@
     }
     
 
-    
-    .claim-pill {
-      padding: 5px 12px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: bold;
-      color: white;
-      flex-shrink: 0;
-      margin-right: 15px;
-      min-width: 80px;
-      text-align: center;
-      height: fit-content;
-    }
-    
     .claim-text {
       flex: 1;
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 15px;
+      line-height: 1.6;
       padding-top: 2px;
     }
     
     .claim-details {
       display: none;
-      padding: 0 12px 12px;
+      padding: 12px 14px;
       border-top: 1px solid #E2E8F0;
-      margin-top: 12px;
+      margin-top: 14px;
       color: #4A5568;
     }
     
     .claim-details.expanded {
       display: block;
+    }
+
+    .claim-arrow {
+      font-size: 14px;
+      transition: transform 0.2s ease;
     }
     
     .claim-speaker {
@@ -223,6 +215,7 @@
       font-weight: 600;
       color: #2D3748;
       font-size: 14px;
+      margin-bottom: 6px;
     }
     
     .sources-header:hover {
@@ -230,7 +223,7 @@
     }
     
     .sources-toggle {
-      margin-left: 8px;
+      margin-left: 10px;
       font-size: 12px;
       transition: transform 0.2s ease;
     }
@@ -242,15 +235,16 @@
     .sources-list {
       display: none;
       margin-top: 10px;
+      padding-left: 10px;
     }
     
     .source-item {
       background: #F1F5F9;
       border: 1px solid #E2E8F0;
       border-radius: 6px;
-      padding: 12px;
+      padding: 14px;
       margin-bottom: 8px;
-      font-size: 13px;
+      font-size: 14px;
     }
     
     .source-header {
@@ -271,7 +265,7 @@
       color: #1976D2;
       padding: 2px 8px;
       border-radius: 12px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 500;
     }
     
@@ -282,7 +276,7 @@
     }
     
     .source-url {
-      font-size: 12px;
+      font-size: 13px;
     }
     
     .source-url a {
@@ -310,6 +304,7 @@
       font-weight: 600;
       color: #2D3748;
       font-size: 14px;
+      margin-bottom: 6px;
     }
     
     .fallacies-header:hover {
@@ -317,7 +312,7 @@
     }
     
     .fallacies-toggle {
-      margin-left: 8px;
+      margin-left: 10px;
       font-size: 12px;
       transition: transform 0.2s ease;
     }
@@ -354,6 +349,7 @@
     .fallacies-list {
       display: none;
       margin-top: 10px;
+      padding-left: 10px;
     }
     
     .fallacy-item {
@@ -362,7 +358,7 @@
       border-radius: 6px;
       padding: 12px;
       margin-bottom: 8px;
-      font-size: 13px;
+      font-size: 14px;
     }
     
     .fallacy-header {
@@ -414,10 +410,10 @@
     }
     
     .fallacy-description {
-      color: #7C2D12;
-      line-height: 1.4;
+      color: #374151;
+      line-height: 1.5;
       margin-bottom: 8px;
-      font-style: italic;
+      font-style: normal;
     }
     
     .fallacy-evidence {

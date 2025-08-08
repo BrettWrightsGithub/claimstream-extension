@@ -524,11 +524,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const fallaciesHtml = generateFallaciesHtml(claim.secondary_data, index);
       
       return `
-        <div class="claim-item">
+        <div class="claim-item" style="border-left: 6px solid ${statusColor};">
           <div class="claim-header" data-claim-index="${index}">
-            <div class="claim-pill" style="background-color: ${statusColor}">
-              ${claim.verification_status || 'Unverified'}
-            </div>
             <div class="claim-text">${claim.original_statement || 'No statement available'}</div>
             <div class="claim-arrow">▶</div>
           </div>
