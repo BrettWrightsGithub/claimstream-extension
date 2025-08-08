@@ -15,8 +15,9 @@
     }
     
     .header {
+      padding: 8px 5px;
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
     }
     
     .logo {
@@ -462,6 +463,67 @@
     .manual-refresh-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        color: #F9FAFB; /* light text */
+      }
+      .content {
+        background: rgba(17, 24, 39, 0.55); /* slate-900 glass */
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
+      }
+      .report-container {
+        background: rgba(17, 24, 39, 0.60);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #E5E7EB;
+        box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+      }
+      .claim-item {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+      }
+      .claim-header:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .claim-details {
+        color: #E5E7EB;
+        border-top-color: rgba(255, 255, 255, 0.10);
+      }
+      .sources-section,
+      .fallacies-section {
+        border-top-color: rgba(255, 255, 255, 0.10);
+      }
+      .source-item {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+      }
+      .source-name { color: #E5E7EB; }
+      .source-credibility {
+        background: rgba(59, 130, 246, 0.20);
+        color: #93C5FD;
+      }
+      .source-url { font-size: 13px; }
+      .source-url a { color: #93C5FD; }
+
+      .fallacy-item {
+        background: rgba(239, 68, 68, 0.10); /* soft red tint */
+        border: 1px solid rgba(239, 68, 68, 0.30);
+      }
+      .fallacy-name { color: #FCA5A5; }
+      .fallacy-description { color: #E5E7EB; }
+      .fallacy-confidence {
+        background: rgba(99, 102, 241, 0.25);
+        color: #C7D2FE;
+      }
+      .fallacy-timestamp {
+        background: rgba(255, 255, 255, 0.08);
+        color: #E5E7EB;
+      }
     }
   </style>
 </head>
