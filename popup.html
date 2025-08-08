@@ -9,8 +9,8 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: transparent; /* neutral transparent background */
-      color: #111827; /* neutral dark text */
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
       overflow-x: hidden;
     }
     
@@ -32,13 +32,10 @@
     }
     
     .content {
-      background: rgba(255, 255, 255, 0.60); /* frosted glass */
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      border-radius: 12px;
-      padding: 16px;
-      backdrop-filter: blur(16px) saturate(160%);
-      -webkit-backdrop-filter: blur(16px) saturate(160%);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 15px;
+      backdrop-filter: blur(10px);
     }
     
     .status {
@@ -99,14 +96,12 @@
     .report-container {
       display: none;
       margin-top: 15px;
-      background: rgba(255, 255, 255, 0.65);
-      border-radius: 14px;
+      background: #F8FAFC;
+      border-radius: 12px;
       padding: 22px;
-      border: 1px solid rgba(255, 255, 255, 0.50);
+      border: 1px solid #E2E8F0;
       color: #1A202C;
-      backdrop-filter: blur(12px) saturate(140%);
-      -webkit-backdrop-filter: blur(12px) saturate(140%);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
     .report-header {
@@ -467,63 +462,35 @@
 
     /* Dark mode support */
     @media (prefers-color-scheme: dark) {
-      body {
-        color: #F9FAFB; /* light text */
-      }
+      /* Neutralize dark mode to match light styling for now */
+      body { color: white; }
       .content {
-        background: rgba(17, 24, 39, 0.55); /* slate-900 glass */
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        backdrop-filter: blur(10px);
       }
       .report-container {
-        background: rgba(17, 24, 39, 0.60);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        color: #E5E7EB;
-        box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+        background: #F8FAFC;
+        border-radius: 12px;
+        padding: 22px;
+        border: 1px solid #E2E8F0;
+        color: #1A202C;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
-      .claim-item {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.10);
-      }
-      .claim-header:hover {
-        background: rgba(255, 255, 255, 0.06);
-      }
-      .claim-details {
-        color: #E5E7EB;
-        border-top-color: rgba(255, 255, 255, 0.10);
-      }
-      .sources-section,
-      .fallacies-section {
-        border-top-color: rgba(255, 255, 255, 0.10);
-      }
-      .source-item {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.10);
-      }
-      .source-name { color: #E5E7EB; }
-      .source-credibility {
-        background: rgba(59, 130, 246, 0.20);
-        color: #93C5FD;
-      }
-      .source-url { font-size: 13px; }
-      .source-url a { color: #93C5FD; }
-
-      .fallacy-item {
-        background: rgba(239, 68, 68, 0.10); /* soft red tint */
-        border: 1px solid rgba(239, 68, 68, 0.30);
-      }
-      .fallacy-name { color: #FCA5A5; }
-      .fallacy-description { color: #E5E7EB; }
-      .fallacy-confidence {
-        background: rgba(99, 102, 241, 0.25);
-        color: #C7D2FE;
-      }
-      .fallacy-timestamp {
-        background: rgba(255, 255, 255, 0.08);
-        color: #E5E7EB;
-      }
+      .claim-item { background: #FFFFFF; border: 1px solid #E2E8F0; }
+      .claim-header:hover { background: #F1F5F9; }
+      .claim-details { color: #4A5568; border-top-color: #E2E8F0; }
+      .sources-section, .fallacies-section { border-top-color: #E2E8F0; }
+      .source-item { background: #F1F5F9; border: 1px solid #E2E8F0; }
+      .source-name { color: #2D3748; }
+      .source-credibility { background: #E3F2FD; color: #1976D2; }
+      .source-url a { color: #3182CE; }
+      .fallacy-item { background: #FEF2F2; border: 1px solid #FECACA; }
+      .fallacy-name { color: #DC2626; }
+      .fallacy-description { color: #374151; }
+      .fallacy-confidence { background: #E0E7FF; color: #3730A3; }
+      .fallacy-timestamp { background: #F3F4F6; color: #374151; }
     }
   </style>
 </head>
